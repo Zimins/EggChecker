@@ -11,20 +11,25 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import org.jsoup.nodes.Document;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     WebView webView;
 
+    EditText inputEggcode;
+    Button searchButton;
+
+    TextView resultText;
+
     Button button;
     Button button2;
-    String resultHTMLRaw;
 
-    Document document;
-
+    ArrayList<String> infos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,19 +37,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         webView = (WebView) findViewById(R.id.webview);
-        button = (Button) findViewById(R.id.button);
-        button2 = (Button) findViewById(R.id.button2);
+        infos = new ArrayList<>();
 
+        inputEggcode = (EditText) findViewById(R.id.input_eggcode);
+        searchButton = (Button) findViewById(R.id.btn_search);
+        resultText = (TextView) findViewById(R.id.tv_result);
 
         webView.getSettings().setJavaScriptEnabled(true);
 
         final Activity activity = this;
         webView.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView view, int progress) {
-                // Activities and WebViews measure progress with different scales.
-                // The progress meter will automatically disappear when we reach 100%
             }
-
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 Log.d("weblog", consoleMessage.message() + '\n' + consoleMessage.messageLevel() +
@@ -52,54 +56,73 @@ public class MainActivity extends AppCompatActivity {
                 return super.onConsoleMessage(consoleMessage);
             }
         });
+
         webView.setWebViewClient(new WebViewClient() {
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 Toast.makeText(activity, "Oh no! " + description, Toast.LENGTH_SHORT).show();
             }
         });
 
-
         webView.loadUrl("http://www.foodsafetykorea.go.kr/portal/fooddanger/eggHazardList.do?menu_grp=MENU_NEW02&menu_no=3497");
 
-
         webView.setVisibility(View.INVISIBLE);
-        button.setOnClickListener(new View.OnClickListener() {
+
+        searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                webView.evaluateJavascript("javascript:"
-                                + "document.getElementById(\"search_keyword\").value=\"08LSH\"",
-                        new ValueCallback<String>() {
-                            @Override
-                            public void onReceiveValue(String value) {
-                                Log.d("onrecieve", value);
-                            }
-                        });
-
-                webView.evaluateJavascript("javascript: searchList()", null);
-
-
+                String eggcode = inputEggcode.getText().toString();
+                searchByCode(eggcode);
             }
         });
-
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (int i=0;i<13;i++) {
-                    webView.evaluateJavascript("javascript: document.getElementsByTagName('td')["
-                            + i
-                            + "].innerText", new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String value) {
-                            Log.d("names", value);
-                        }
-                    });
-                }
-            }
-        });
-
-
     }
 
+    void searchByCode(String eggCode) {
+        webView.evaluateJavascript("javascript:"
+                        + "document.getElementById(\"search_keyword\").value=\"" +
+                        eggCode + "\"",
+                new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        Log.d("onrecieve", value);
+
+
+                    }
+                });
+        webView.evaluateJavascript("javascript: searchList()", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                getEggInfo();
+            }
+        });
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+            }
+        });
+    }
+
+    void getEggInfo() {
+
+        for (int i=0;i<13;i++) {
+            webView.evaluateJavascript("javascript: document.getElementsByTagName('td')["
+                    + i
+                    + "].innerText", new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    Log.d("names", value);
+                    resultText.setText("");
+                    resultText.append(value + "\n");
+                    infos.add(value);
+                }
+            });
+        }
+    }
 }
 
 
