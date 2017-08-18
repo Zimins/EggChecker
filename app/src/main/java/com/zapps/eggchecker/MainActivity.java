@@ -1,7 +1,6 @@
 package com.zapps.eggchecker;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,12 +15,20 @@ import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class MainActivity extends AppCompatActivity {
 
     WebView webView;
 
     Button button;
+    Button button2;
+    String resultHTMLRaw;
+
+    Document document;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,10 +36,10 @@ public class MainActivity extends AppCompatActivity {
 
         webView = (WebView) findViewById(R.id.webview);
         button = (Button) findViewById(R.id.button);
+        button2 = (Button) findViewById(R.id.button2);
 
 
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.addJavascriptInterface(new MyJavaScriptInterface(this), "HtmlViewer");
 
         final Activity activity = this;
         webView.setWebChromeClient(new WebChromeClient() {
@@ -61,41 +68,49 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    webView.evaluateJavascript("javascript:"
-                                    + "document.getElementById(\"search_keyword\").value=\"08LSH\"",
-                            new ValueCallback<String>() {
-                                @Override
-                                public void onReceiveValue(String value) {
-                                    Log.d("onrecieve", value);
-                                }
-                            });
+                webView.evaluateJavascript("javascript:"
+                                + "document.getElementById(\"search_keyword\").value=\"08LSH\"",
+                        new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                                Log.d("onrecieve", value);
+                            }
+                        });
 
-                    webView.evaluateJavascript(
-                        "(function() { return ('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>'); })();",
+                webView.evaluateJavascript("javascript: searchList()", null);
+
+
+            }
+        });
+
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                webView.evaluateJavascript(
+                        "(function() { return (\'<html>\'+document.getElementsByTagName(\'html\')" +
+                                "[0].innerHTML+\'</html>\'); })();",
                         new ValueCallback<String>() {
                             @Override
                             public void onReceiveValue(String html) {
                                 Log.d("HTML", html);
-                                // code here
+                                // code herkk
+                                document = Jsoup.parse(html);
+                                Elements elements = document.getElementsByTag("td");
+
+
+                                Log.d("elementnum", elements.first().toString());
+                                for (Element element : elements) {
+                                    Log.i("tds", element.text());
+                                }
                             }
                         });
-                    webView.evaluateJavascript("javascript: searchList()",null);
+
             }
         });
 
 
     }
 
-    class MyJavaScriptInterface {
-        private Context context;
-
-        public MyJavaScriptInterface(Context context) {
-            this.context = context;
-        }
-
-        public String  getHtmlFromResult(String html) {
-            Log.d("html",html);
-            return html;
-        }
-    }
 }
+
+
