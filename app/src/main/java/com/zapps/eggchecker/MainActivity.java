@@ -13,10 +13,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.Toast;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl("http://www.foodsafetykorea.go.kr/portal/fooddanger/eggHazardList.do?menu_grp=MENU_NEW02&menu_no=3497");
 
 
+        webView.setVisibility(View.INVISIBLE);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,25 +84,16 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                webView.evaluateJavascript(
-                        "(function() { return (\'<html>\'+document.getElementsByTagName(\'html\')" +
-                                "[0].innerHTML+\'</html>\'); })();",
-                        new ValueCallback<String>() {
-                            @Override
-                            public void onReceiveValue(String html) {
-                                Log.d("HTML", html);
-                                // code herkk
-                                document = Jsoup.parse(html);
-                                Elements elements = document.getElementsByTag("td");
-
-
-                                Log.d("elementnum", elements.first().toString());
-                                for (Element element : elements) {
-                                    Log.i("tds", element.text());
-                                }
-                            }
-                        });
-
+                for (int i=0;i<13;i++) {
+                    webView.evaluateJavascript("javascript: document.getElementsByTagName('td')["
+                            + i
+                            + "].innerText", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.d("names", value);
+                        }
+                    });
+                }
             }
         });
 
