@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void getEggInfo() {
-
+        resultText.setText("");
         for (int i=0;i<13;i++) {
             webView.evaluateJavascript("javascript: document.getElementsByTagName('td')["
                     + i
@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onReceiveValue(String value) {
                     Log.d("names", value);
-                    resultText.setText("");
                     resultText.append(value + "\n");
                     infos.add(value);
                 }
