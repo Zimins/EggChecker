@@ -1,9 +1,10 @@
 package com.zapps.eggchecker;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.ValueCallback;
@@ -12,10 +13,13 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,10 +30,13 @@ public class MainActivity extends AppCompatActivity {
 
     TextView resultText;
 
-    Button button;
-    Button button2;
+    LinearLayout resultView;
 
     ArrayList<String> infos;
+    Map<String, String> results;
+
+    String resultKey;
+    String resultValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +45,15 @@ public class MainActivity extends AppCompatActivity {
 
         webView = (WebView) findViewById(R.id.webview);
         infos = new ArrayList<>();
+        resultView = (LinearLayout) findViewById(R.id.view_result);
 
         inputEggcode = (EditText) findViewById(R.id.input_eggcode);
         searchButton = (Button) findViewById(R.id.btn_search);
-        resultText = (TextView) findViewById(R.id.tv_result);
+
+        results = new HashMap<>();
 
         webView.getSettings().setJavaScriptEnabled(true);
 
-        final Activity activity = this;
         webView.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView view, int progress) {
             }
@@ -59,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new WebViewClient() {
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                Toast.makeText(activity, "Oh no! " + description, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Oh no! " + description, Toast.LENGTH_SHORT)
+                        .show();
             }
         });
 
@@ -84,8 +93,6 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onReceiveValue(String value) {
                         Log.d("onrecieve", value);
-
-
                     }
                 });
         webView.evaluateJavascript("javascript: searchList()", new ValueCallback<String>() {
@@ -100,27 +107,44 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-            }
-        });
     }
 
     void getEggInfo() {
-        resultText.setText("");
-        for (int i=0;i<13;i++) {
+
+
+
+        for (int i=0;i<EggInfo.KEY_EGG_CODE+1;i++) {
+
+            ConstraintLayout layout = (ConstraintLayout) LayoutInflater.from(MainActivity.this)
+                    .inflate(R.layout.item_result,null);
+            final TextView title = (TextView)layout.findViewById(R.id.item_title);
+            final TextView info = (TextView)layout.findViewById(R.id.item_value);
+            webView.evaluateJavascript("javascript: document.getElementsByTagName('th')["
+                    + i
+                    + "].innerText", new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    Log.d("names", value);
+                    title.setText(value.replace("\"", ""));
+                }
+            });
             webView.evaluateJavascript("javascript: document.getElementsByTagName('td')["
                     + i
                     + "].innerText", new ValueCallback<String>() {
                 @Override
                 public void onReceiveValue(String value) {
                     Log.d("names", value);
-                    resultText.append(value + "\n");
-                    infos.add(value);
+                    info.setText(value.replace("\"", ""));
                 }
             });
+
+            resultView.addView(layout);
+
         }
+
+
+
+
     }
 }
 
